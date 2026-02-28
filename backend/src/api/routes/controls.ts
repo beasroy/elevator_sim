@@ -11,6 +11,7 @@ import {
   initElevators,
 } from '../../simulation/state';
 import { resetGenerator } from '../../simulation/requestGenerator';
+import { resetLoopAccumulator } from '../../simulation/loop';
 
 const router = Router();
 
@@ -27,6 +28,7 @@ router.post('/stop', (_req, res) => {
 router.post('/reset', (_req, res) => {
   resetState();
   resetGenerator();
+  resetLoopAccumulator();
   res.json({ ok: true });
 });
 

@@ -28,10 +28,11 @@ export function averageTravelTimeMs(requests: Request[]): number | null {
   return sum / withCompletion.length;
 }
 
-export function utilizationPerElevator(elevators: Elevator[]): Record<string, { passengers: number; stopsCount: number }> {
-  const out: Record<string, { passengers: number; stopsCount: number }> = {};
+export function utilizationPerElevator(elevators: Elevator[]): Record<string, number> {
+  const out: Record<string, number> = {};
   for (const e of elevators) {
-    out[e.id] = { passengers: e.passengers, stopsCount: e.stops.length };
+    const busy = e.stops.length + e.passengers;
+    out[e.id] = Math.min(busy / 10, 1);
   }
   return out;
 }

@@ -17,6 +17,18 @@ import { maybeEmitRequest } from './requestGenerator';
 // Simulation ms per floor travel (elevator moves 1 floor per FLOOR_MS).
 const FLOOR_MS = 1000;
 
+// Accumulates fractional travel between ticks so elevators move at all speeds.
+let travelAccumulator = 0;
+
+// Track when each elevator's door was opened so it stays open long enough to be visible.
+const doorOpenUntil = new Map<string, number>();
+const DOOR_OPEN_DURATION_MS = 2000;
+
+export function resetLoopAccumulator(): void {
+  travelAccumulator = 0;
+  doorOpenUntil.clear();
+}
+
 // Advance simulation by deltaMs (wall-clock). Only runs when isRunning.
 // Updates sim time, reorders stops (30s override), moves elevators, serves stops.
 
@@ -40,7 +52,10 @@ export function tick(deltaMs: number): void {
     });
   }
 
-  const steps = Math.floor(travelBudget / FLOOR_MS);
+  travelAccumulator += travelBudget;
+  const steps = Math.floor(travelAccumulator / FLOOR_MS);
+  travelAccumulator -= steps * FLOOR_MS;
+
   for (let step = 0; step < steps; step++) {
     const stepTime = now + (step + 1) * FLOOR_MS;
     for (const elevator of elevators) {
@@ -48,47 +63,62 @@ export function tick(deltaMs: number): void {
     }
   }
 
+  const currentSimTime = getSimTimeMs();
   for (const elevator of elevators) {
-    elevator.doorOpen = false;
+    const closeAt = doorOpenUntil.get(elevator.id);
+    if (elevator.doorOpen && closeAt != null && currentSimTime >= closeAt) {
+      elevator.doorOpen = false;
+      doorOpenUntil.delete(elevator.id);
+    }
+  }
+}
+
+const LOBBY_FLOOR = 0;
+
+function prePositionIdle(elevator: Elevator): void {
+  if (elevator.currentFloor === LOBBY_FLOOR) {
+    elevator.direction = 'idle';
+    return;
+  }
+  elevator.direction = elevator.currentFloor > LOBBY_FLOOR ? 'down' : 'up';
+  elevator.currentFloor += elevator.currentFloor > LOBBY_FLOOR ? -1 : 1;
+}
+
+function moveToward(elevator: Elevator, target: number, now: number, stop: Stop): void {
+  const current = elevator.currentFloor;
+  if (current < target) {
+    elevator.direction = 'up';
+    elevator.currentFloor = current + 1;
+  } else if (current > target) {
+    elevator.direction = 'down';
+    elevator.currentFloor = current - 1;
+  }
+  if (elevator.currentFloor === target) {
+    serveStop(elevator, stop, now);
   }
 }
 
 function processElevatorTick(elevator: Elevator, now: number): void {
-  const next = elevator.stops[0];
-  if (!next) {
-    elevator.direction = 'idle';
-    return;
-  }
+  if (elevator.doorOpen) return;
 
-  const current = elevator.currentFloor;
-  if (current < next.floor) {
-    elevator.direction = 'up';
-    elevator.currentFloor = current + 1;
-    if (elevator.currentFloor === next.floor) {
-      serveStop(elevator, next, now);
-    }
+  const next = elevator.stops[0];
+  if (next) {
+    moveToward(elevator, next.floor, now, next);
     return;
   }
-  if (current > next.floor) {
-    elevator.direction = 'down';
-    elevator.currentFloor = current - 1;
-    if (elevator.currentFloor === next.floor) {
-      serveStop(elevator, next, now);
-    }
-    return;
-  }
-  serveStop(elevator, next, now);
+  prePositionIdle(elevator);
 }
 
 function serveStop(elevator: Elevator, stop: Stop, now: number): void {
   elevator.doorOpen = true;
+  doorOpenUntil.set(elevator.id, now + DOOR_OPEN_DURATION_MS);
 
   for (const requestId of stop.requestIds) {
     if (stop.type === 'pickup') {
       elevator.passengers += 1;
       assignRequestToElevator(requestId, elevator.id, now);
     } else {
-      elevator.passengers -= 1;
+      elevator.passengers = Math.max(0, elevator.passengers - 1);
       assignRequestToElevator(requestId, elevator.id, undefined, now);
     }
   }
