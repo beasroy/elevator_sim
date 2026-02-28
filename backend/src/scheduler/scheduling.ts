@@ -58,7 +58,56 @@ export function orderStopsForElevator(
 
   const upSorted = promoteStarved(up, true);
   const downSorted = promoteStarved(down, false);
-  return [...upSorted, ...downSorted];
+  const scanOrder = [...upSorted, ...downSorted];
+  return enforcePickupBeforeDropoff(scanOrder);
+}
+
+/**
+ * Ensures every dropoff stop appears after its corresponding pickup stop.
+ * SCAN ordering can place a dropoff before its pickup when they fall on
+ * opposite sides of the elevator's current floor; this pass defers such
+ * dropoffs until immediately after their pickup is encountered.
+ */
+function enforcePickupBeforeDropoff(stops: Stop[]): Stop[] {
+  const pendingPickupIds = new Set<string>();
+  for (const s of stops) {
+    if (s.type === 'pickup') {
+      for (const id of s.requestIds) pendingPickupIds.add(id);
+    }
+  }
+
+  const result: Stop[] = [];
+  const deferred: Stop[] = [];
+  const pickedUp = new Set<string>();
+
+  for (const stop of stops) {
+    if (
+      stop.type === 'dropoff' &&
+      stop.requestIds.some((id) => pendingPickupIds.has(id) && !pickedUp.has(id))
+    ) {
+      deferred.push(stop);
+      continue;
+    }
+
+    result.push(stop);
+
+    if (stop.type === 'pickup') {
+      for (const id of stop.requestIds) pickedUp.add(id);
+      let i = 0;
+      while (i < deferred.length) {
+        const d = deferred[i];
+        if (d.requestIds.every((id) => !pendingPickupIds.has(id) || pickedUp.has(id))) {
+          result.push(d);
+          deferred.splice(i, 1);
+        } else {
+          i++;
+        }
+      }
+    }
+  }
+
+  result.push(...deferred);
+  return result;
 }
 
 

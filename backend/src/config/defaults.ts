@@ -1,3 +1,4 @@
+
 // Default simulation config: n elevators, k floors, request frequency, rush window.
 
 export const defaults = {
@@ -27,6 +28,8 @@ export const defaults = {
   drainIntervalMs: 60_000,
 
   drainAgeMs: 120_000,
+
+  preRushLeadMs: 10_000,
 } as const;
 
 export type Defaults = typeof defaults;
@@ -36,5 +39,14 @@ export function isRushWindow(now: number): boolean {
   return (
     now >= defaults.rushStartMs &&
     now < defaults.rushStartMs + defaults.rushDurationMs
+  );
+}
+
+// Returns true in the configurable lead window immediately before rush hour,
+// so elevators can pre-position to the lobby in time.
+export function isPreRushWindow(now: number): boolean {
+  return (
+    now >= defaults.rushStartMs - defaults.preRushLeadMs &&
+    now < defaults.rushStartMs
   );
 }

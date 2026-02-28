@@ -1,3 +1,4 @@
+
 // Time-based simulation loop: tick, move elevators, open/close doors, update positions, serve stops.
 
 import type { Elevator } from '../models/Elevator';
@@ -17,7 +18,7 @@ import {
 import { reorderStops } from '../scheduler/scheduling';
 import { retryPendingRequests } from '../scheduler';
 import { maybeEmitRequest } from './requestGenerator';
-import { isRushWindow, defaults } from '../config/defaults';
+import { isRushWindow, isPreRushWindow, defaults } from '../config/defaults';
 
 // Simulation ms per floor travel (elevator moves 1 floor per FLOOR_MS).
 const FLOOR_MS = 1000;
@@ -61,7 +62,8 @@ export function tick(deltaMs: number): void {
   const steps = Math.floor(travelAccumulator / FLOOR_MS);
   travelAccumulator -= steps * FLOOR_MS;
 
-  const rush = isRushWindow(getSimTimeMs());
+  const simNow = getSimTimeMs();
+  const rush = isRushWindow(simNow) || isPreRushWindow(simNow);
   const nFloors = getNumFloors();
   const nElevators = elevators.length;
 
@@ -137,6 +139,10 @@ function processElevatorTick(
   const next = elevator.stops[0];
   if (next) {
     moveToward(elevator, next.floor, now, next);
+    return;
+  }
+  if (elevator.passengers > 0) {
+    elevator.direction = 'idle';
     return;
   }
   prePositionIdle(elevator, idleTargetFloor);
