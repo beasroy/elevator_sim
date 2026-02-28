@@ -1,6 +1,6 @@
 import type { MetricsResponse } from '../types';
 
-const BASE = '/api';
+const BASE = import.meta.env.VITE_API_BASE || '/api';
 
 export async function fetchMetrics(): Promise<MetricsResponse> {
   const res = await fetch(`${BASE}/metrics`);

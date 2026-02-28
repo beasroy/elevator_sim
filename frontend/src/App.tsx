@@ -53,7 +53,7 @@ export default function App() {
   return (
     <div className="min-h-screen bg-gray-950 text-gray-100 font-sans">
       <Toast
-        message="Rush hour approaching — elevators are pre-positioning to the lobby!"
+        message="Rush hour approaching! Elevators are pre-positioning to the lobby!"
         visible={rushToast}
         durationMs={6000}
         onDismiss={dismissRushToast}
