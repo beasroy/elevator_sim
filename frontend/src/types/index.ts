@@ -45,6 +45,8 @@ export interface MetricsResponse {
   numElevators: number;
   startTimeMs: number;
   elevatorCapacity: number;
+  rushStartMs: number;
+  preRushLeadMs: number;
   elevators: Elevator[];
   requests: Request[];
   metrics: Metrics;

@@ -20,6 +20,8 @@ router.get('/', (_req, res) => {
     numElevators: getNumElevators(),
     startTimeMs: getStartTimeMs(),
     elevatorCapacity: defaults.elevatorCapacity,
+    rushStartMs: defaults.rushStartMs,
+    preRushLeadMs: defaults.preRushLeadMs,
     elevators,
     requests,
     metrics: {

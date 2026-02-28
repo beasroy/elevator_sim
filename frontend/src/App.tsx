@@ -1,12 +1,44 @@
+import { useCallback, useEffect, useRef, useState } from 'react';
 import { useSimulation } from './hooks/useSimulation';
 import Building from './components/Building';
 import ControlsPanel from './components/ControlsPanel';
 import MetricsPanel from './components/MetricsPanel';
 import RequestList from './components/RequestList';
 import BiasesInfo from './components/BiasesInfo';
+import Toast from './components/Toast';
 
 export default function App() {
   const { state, error, start, stop, reset, configure } = useSimulation();
+
+  const [rushToast, setRushToast] = useState(false);
+  const shownForRun = useRef(false);
+  const prevSimTime = useRef<number>(0);
+
+  useEffect(() => {
+    if (!state) return;
+    if (!state.isRunning) {
+      shownForRun.current = false;
+      prevSimTime.current = 0;
+      return;
+    }
+
+    const preRushStart = state.rushStartMs - state.preRushLeadMs;
+    const prev = prevSimTime.current;
+    const now = state.simTimeMs;
+    prevSimTime.current = now;
+
+    if (
+      !shownForRun.current &&
+      prev < preRushStart &&
+      now >= preRushStart &&
+      now < state.rushStartMs
+    ) {
+      setRushToast(true);
+      shownForRun.current = true;
+    }
+  }, [state]);
+
+  const dismissRushToast = useCallback(() => setRushToast(false), []);
 
   if (!state) {
     return (
@@ -20,6 +52,12 @@ export default function App() {
 
   return (
     <div className="min-h-screen bg-gray-950 text-gray-100 font-sans">
+      <Toast
+        message="Rush hour approaching — elevators are pre-positioning to the lobby!"
+        visible={rushToast}
+        durationMs={6000}
+        onDismiss={dismissRushToast}
+      />
       {/* Header */}
       <header className="border-b border-gray-800 px-6 py-4 flex items-center justify-between">
         <div>
