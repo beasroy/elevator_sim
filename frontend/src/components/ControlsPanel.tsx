@@ -1,20 +1,34 @@
 import { useState, useEffect } from 'react';
 
 interface Props {
-  isRunning: boolean;
-  speedMultiplier: number;
-  requestFrequencyMs: number;
-  numFloors: number;
-  numElevators: number;
-  onStart: () => void;
-  onStop: () => void;
-  onReset: () => void;
-  onConfigure: (cfg: {
+  readonly isRunning: boolean;
+  readonly speedMultiplier: number;
+  readonly requestFrequencyMs: number;
+  readonly numFloors: number;
+  readonly numElevators: number;
+  readonly startTimeMs: number;
+  readonly onStart: () => void;
+  readonly onStop: () => void;
+  readonly onReset: () => void;
+  readonly onConfigure: (cfg: {
     numFloors?: number;
     numElevators?: number;
     speed?: number;
     requestFrequencyMs?: number;
+    startTimeMs?: number;
   }) => void;
+}
+
+function msToTimeStr(ms: number): string {
+  const totalMin = Math.floor(ms / 60000);
+  const h = Math.floor(totalMin / 60);
+  const m = totalMin % 60;
+  return `${String(h).padStart(2, '0')}:${String(m).padStart(2, '0')}`;
+}
+
+function timeStrToMs(str: string): number {
+  const [h, m] = str.split(':').map(Number);
+  return (h || 0) * 3600000 + (m || 0) * 60000;
 }
 
 const SPEED_OPTIONS = [1, 2, 5];
@@ -25,6 +39,7 @@ export default function ControlsPanel({
   requestFrequencyMs,
   numFloors,
   numElevators,
+  startTimeMs,
   onStart,
   onStop,
   onReset,
@@ -33,10 +48,12 @@ export default function ControlsPanel({
   const [floors, setFloors] = useState(numFloors);
   const [elevators, setElevators] = useState(numElevators);
   const [freq, setFreq] = useState(requestFrequencyMs);
+  const [simStart, setSimStart] = useState(msToTimeStr(startTimeMs));
 
   useEffect(() => setFloors(numFloors), [numFloors]);
   useEffect(() => setElevators(numElevators), [numElevators]);
   useEffect(() => setFreq(requestFrequencyMs), [requestFrequencyMs]);
+  useEffect(() => setSimStart(msToTimeStr(startTimeMs)), [startTimeMs]);
 
   return (
     <div className="bg-gray-900 rounded-xl p-5 space-y-5 border border-gray-700/50">
@@ -143,6 +160,19 @@ export default function ControlsPanel({
             onBlur={() => onConfigure({ requestFrequencyMs: freq })}
             className="w-20 bg-gray-800 border border-gray-600 rounded-lg px-2 py-1 text-right
               text-gray-100 focus:outline-none focus:border-indigo-500"
+          />
+        </label>
+
+        <label className="flex items-center justify-between text-sm text-gray-300">
+          <span>Start time</span>
+          <input
+            type="time"
+            value={simStart}
+            onChange={(e) => setSimStart(e.target.value)}
+            onBlur={() => onConfigure({ startTimeMs: timeStrToMs(simStart) })}
+            className="w-28 bg-gray-800 border border-gray-600 rounded-lg px-2 py-1 text-right
+              text-gray-100 focus:outline-none focus:border-indigo-500
+              scheme-dark"
           />
         </label>
       </div>

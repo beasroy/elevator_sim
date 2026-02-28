@@ -9,15 +9,21 @@ let elevators: Elevator[] = [];
 let requests: Request[] = [];
 let numFloors: number = defaults.numFloors;
 let numElevators: number = defaults.numElevators;
-let simTimeMs: number = 0;
+let simTimeMs: number = defaults.startTimeMs;
+let startTimeMs: number = defaults.startTimeMs;
 let speedMultiplier: number = 1;
 let requestFrequencyMs: number = defaults.requestFrequencyMs;
 let isRunning: boolean = false;
 
-function createElevator(id: string): Elevator {
+function homeFloor(index: number, nElevators: number, nFloors: number): number {
+  if (nElevators <= 1) return Math.floor((nFloors - 1) / 2);
+  return Math.round(index * (nFloors - 1) / (nElevators - 1));
+}
+
+function createElevator(id: string, index: number): Elevator {
   return {
     id,
-    currentFloor: 0,
+    currentFloor: homeFloor(index, numElevators, numFloors),
     direction: 'idle',
     doorOpen: false,
     passengers: 0,
@@ -33,9 +39,29 @@ export function getRequests(): Request[] {
   return requests;
 }
 
-/** Unassigned requests (no assignedElevatorId). */
+/** Unassigned, non-rejected requests. */
 export function getPendingRequests(): Request[] {
-  return requests.filter((r) => r.assignedElevatorId == null);
+  return requests.filter(
+    (r) => r.assignedElevatorId == null && r.rejectedAt == null
+  );
+}
+
+export function getPendingCount(): number {
+  let count = 0;
+  for (const r of requests) {
+    if (r.assignedElevatorId == null && r.rejectedAt == null) count++;
+  }
+  return count;
+}
+
+/**
+ * Remove completed requests older than `maxAge` (sim-ms) to bound array growth.
+ * Keeps rejected requests so metrics can still count them.
+ */
+export function drainCompleted(now: number, maxAge: number): void {
+  requests = requests.filter(
+    (r) => r.completionTime == null || now - r.completionTime < maxAge
+  );
 }
 
 export function getNumFloors(): number {
@@ -60,6 +86,14 @@ export function getSimTimeMs(): number {
 
 export function setSimTimeMs(ms: number): void {
   simTimeMs = ms;
+}
+
+export function getStartTimeMs(): number {
+  return startTimeMs;
+}
+
+export function setStartTimeMs(ms: number): void {
+  startTimeMs = ms;
 }
 
 export function getSpeedMultiplier(): number {
@@ -92,17 +126,17 @@ export function resetState(): void {
   numElevators = defaults.numElevators;
   requestFrequencyMs = defaults.requestFrequencyMs;
   requests = [];
-  simTimeMs = 0;
+  simTimeMs = startTimeMs;
   isRunning = false;
   elevators = Array.from({ length: numElevators }, (_, i) =>
-    createElevator(`elevator-${i}`)
+    createElevator(`elevator-${i}`, i)
   );
 }
 
 /** Initialize elevators only (e.g. after config change). */
 export function initElevators(): void {
   elevators = Array.from({ length: numElevators }, (_, i) =>
-    createElevator(`elevator-${i}`)
+    createElevator(`elevator-${i}`, i)
   );
 }
 
@@ -140,4 +174,12 @@ export function assignRequestToElevator(
 
 export function getElevatorById(id: string): Elevator | undefined {
   return elevators.find((e) => e.id === id);
+}
+
+
+export function unassignRequest(requestId: string): void {
+  const request = requests.find((r) => r.id === requestId);
+  if (!request) return;
+  request.assignedElevatorId = undefined;
+  request.pickupTime = undefined;
 }

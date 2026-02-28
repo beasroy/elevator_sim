@@ -7,9 +7,10 @@ interface Props {
   readonly elevators: Elevator[];
   readonly requests: Request[];
   readonly numFloors: number;
+  readonly elevatorCapacity: number;
 }
 
-export default function Building({ elevators, requests, numFloors }: Props) {
+export default function Building({ elevators, requests, numFloors, elevatorCapacity }: Props) {
   const floorRequests = useMemo(() => {
     const up = new Set<number>();
     const down = new Set<number>();
@@ -76,7 +77,7 @@ export default function Building({ elevators, requests, numFloors }: Props) {
               </span>
             </div>
 
-            <ElevatorCar elevator={elev} numFloors={numFloors} />
+            <ElevatorCar elevator={elev} numFloors={numFloors} capacity={elevatorCapacity} />
           </div>
         ))}
       </div>

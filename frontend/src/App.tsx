@@ -50,6 +50,7 @@ export default function App() {
             requestFrequencyMs={state.requestFrequencyMs}
             numFloors={state.numFloors}
             numElevators={state.numElevators}
+            startTimeMs={state.startTimeMs}
             onStart={start}
             onStop={stop}
             onReset={reset}
@@ -69,6 +70,7 @@ export default function App() {
             elevators={state.elevators}
             requests={state.requests}
             numFloors={state.numFloors}
+            elevatorCapacity={state.elevatorCapacity}
           />
         </main>
 

@@ -2,7 +2,7 @@ import type { Request } from '../types';
 import { useMemo } from 'react';
 
 interface Props {
-  requests: Request[];
+  readonly requests: Request[];
 }
 
 type Status = 'waiting' | 'in-elevator' | 'completed';
@@ -57,10 +57,15 @@ export default function RequestList({ requests }: Props) {
               <span>
                 F{r.originFloor}{' '}
                 <span className={r.direction === 'up' ? 'text-emerald-400' : 'text-amber-400'}>
-                  {r.direction === 'up' ? '→' : '→'}
+                  {r.direction === 'up' ? '↑' : '↓'}
                 </span>{' '}
                 F{r.destFloor}
               </span>
+              {r.assignedElevatorId && (
+                <span className="text-[10px] text-gray-500 font-mono">
+                  E{r.assignedElevatorId.replace('elevator-', '')}
+                </span>
+              )}
               <span className={`ml-auto px-1.5 py-0.5 rounded text-[10px] font-medium ${STATUS_BADGE[s]}`}>
                 {s}
               </span>

@@ -24,4 +24,5 @@ export const setConfig = (cfg: {
   numElevators?: number;
   speed?: number;
   requestFrequencyMs?: number;
+  startTimeMs?: number;
 }) => postControl('config', cfg);

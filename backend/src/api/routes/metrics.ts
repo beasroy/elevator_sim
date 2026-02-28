@@ -2,8 +2,9 @@
 
  
 import { Router } from 'express';
-import { getElevators, getRequests, getSimTimeMs, getIsRunning, getSpeedMultiplier, getRequestFrequencyMs, getNumFloors, getNumElevators } from '../../simulation/state';
+import { getElevators, getRequests, getSimTimeMs, getIsRunning, getSpeedMultiplier, getRequestFrequencyMs, getNumFloors, getNumElevators, getStartTimeMs } from '../../simulation/state';
 import * as calculator from '../../metrics/calculator';
+import { defaults } from '../../config/defaults';
 
 const router = Router();
 
@@ -17,6 +18,8 @@ router.get('/', (_req, res) => {
     requestFrequencyMs: getRequestFrequencyMs(),
     numFloors: getNumFloors(),
     numElevators: getNumElevators(),
+    startTimeMs: getStartTimeMs(),
+    elevatorCapacity: defaults.elevatorCapacity,
     elevators,
     requests,
     metrics: {
@@ -24,6 +27,8 @@ router.get('/', (_req, res) => {
       maxWaitTimeMs: calculator.maxWaitTimeMs(requests),
       averageTravelTimeMs: calculator.averageTravelTimeMs(requests),
       utilization: calculator.utilizationPerElevator(elevators),
+      pendingCount: calculator.pendingCount(requests),
+      rejectedCount: calculator.rejectedCount(requests),
     },
   });
 });

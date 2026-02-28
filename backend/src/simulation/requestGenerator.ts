@@ -3,7 +3,12 @@
 
 import type { Request } from '../models/Request';
 import { defaults, isRushWindow } from '../config/defaults';
-import { getNumFloors, getRequestFrequencyMs, addRequest } from './state';
+import {
+  getNumFloors,
+  getRequestFrequencyMs,
+  addRequest,
+  getPendingCount,
+} from './state';
 import { handleNewRequest } from '../scheduler';
 
 let lastEmitSimTimeMs = -defaults.requestFrequencyMs;
@@ -62,6 +67,13 @@ export function maybeEmitRequest(now: number): void {
   lastEmitSimTimeMs = now;
   const request = createRequest(now);
   if (request.originFloor === request.destFloor) return;
+
+  if (getPendingCount() >= defaults.maxPendingRequests) {
+    request.rejectedAt = now;
+    addRequest(request);
+    return;
+  }
+
   addRequest(request);
   handleNewRequest(request, { now });
 }

@@ -17,6 +17,16 @@ export const defaults = {
   starvationThresholdMs: 30_000,
 
   lobbyFloor: 0,
+
+  startTimeMs: 8 * 60 * 60 * 1000,
+
+  elevatorCapacity: 8,
+
+  maxPendingRequests: 100,
+
+  drainIntervalMs: 60_000,
+
+  drainAgeMs: 120_000,
 } as const;
 
 export type Defaults = typeof defaults;

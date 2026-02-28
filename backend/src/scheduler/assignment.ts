@@ -8,7 +8,14 @@ import { reorderStops } from './scheduling';
 
 // Elevator is eligible if: idle, or same direction and will pass request floor, or can serve after reversing.
 
+function projectedPassengers(elevator: Elevator): number {
+  const futurePickups = elevator.stops.filter((s) => s.type === 'pickup').length;
+  return elevator.passengers + futurePickups;
+}
+
 export function isEligible(elevator: Elevator, request: Request): boolean {
+  if (projectedPassengers(elevator) >= defaults.elevatorCapacity) return false;
+
   const { currentFloor, direction } = elevator;
   const origin = request.originFloor;
   const reqDir = request.direction;

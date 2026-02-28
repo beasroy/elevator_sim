@@ -8,28 +8,27 @@ const POLL_SLOW = 1000;
 export function useSimulation() {
   const [state, setState] = useState<MetricsResponse | null>(null);
   const [error, setError] = useState<string | null>(null);
-  const intervalRef = useRef<ReturnType<typeof setInterval> | null>(null);
+  const inflight = useRef(false);
 
   const poll = useCallback(async () => {
+    if (inflight.current) return;
+    inflight.current = true;
     try {
       const data = await fetchMetrics();
       setState(data);
       setError(null);
     } catch (e) {
       setError(e instanceof Error ? e.message : 'Failed to fetch');
+    } finally {
+      inflight.current = false;
     }
   }, []);
 
   useEffect(() => {
     poll();
-  }, [poll]);
-
-  useEffect(() => {
     const ms = state?.isRunning ? POLL_FAST : POLL_SLOW;
-    intervalRef.current = setInterval(poll, ms);
-    return () => {
-      if (intervalRef.current) clearInterval(intervalRef.current);
-    };
+    const id = setInterval(poll, ms);
+    return () => clearInterval(id);
   }, [poll, state?.isRunning]);
 
   const start = useCallback(async () => {

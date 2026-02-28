@@ -2,11 +2,10 @@
 
 import type { Request } from '../models/Request';
 import { assignRequest } from './assignment';
-import { getElevators } from '../simulation/state';
+import { getElevators, getPendingRequests } from '../simulation/state';
 import { isRushWindow } from '../config/defaults';
 
 export interface HandleRequestOptions {
-  // Current simulation time (ms). Used for starvation and rush.
   now: number;
 }
 
@@ -24,6 +23,32 @@ export function handleNewRequest(
     isRushWindow: isRushWindow(options.now),
   });
   return elevator?.id;
+}
+
+const RETRY_INTERVAL_MS = 2000;
+let lastRetrySimTimeMs = 0;
+
+/**
+ * Re-attempt assignment for requests that had no eligible elevator on first try.
+ * Called each tick; throttled to run every RETRY_INTERVAL_MS of sim-time.
+ */
+export function retryPendingRequests(now: number): void {
+  if (now - lastRetrySimTimeMs < RETRY_INTERVAL_MS) return;
+  lastRetrySimTimeMs = now;
+
+  const pending = getPendingRequests();
+  if (pending.length === 0) return;
+
+  const elevators = getElevators();
+  const rush = isRushWindow(now);
+
+  for (const request of pending) {
+    assignRequest(elevators, request, { now, isRushWindow: rush });
+  }
+}
+
+export function resetRetryTimer(): void {
+  lastRetrySimTimeMs = 0;
 }
 
 export { assignRequest, chooseElevator, isEligible, scoreElevator } from './assignment';

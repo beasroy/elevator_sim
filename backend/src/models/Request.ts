@@ -11,4 +11,5 @@ export interface Request {
   assignedElevatorId?: string;
   pickupTime?: number;
   completionTime?: number;
+  rejectedAt?: number; // Set when the request was rejected due to queue-full backpressure.
 }

@@ -32,6 +32,8 @@ export interface Metrics {
   maxWaitTimeMs: number;
   averageTravelTimeMs: number;
   utilization: Record<string, number>;
+  pendingCount: number;
+  rejectedCount: number;
 }
 
 export interface MetricsResponse {
@@ -41,6 +43,8 @@ export interface MetricsResponse {
   requestFrequencyMs: number;
   numFloors: number;
   numElevators: number;
+  startTimeMs: number;
+  elevatorCapacity: number;
   elevators: Elevator[];
   requests: Request[];
   metrics: Metrics;

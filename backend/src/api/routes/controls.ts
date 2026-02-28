@@ -8,10 +8,13 @@ import {
   setNumElevators,
   setSpeedMultiplier,
   setRequestFrequencyMs,
+  setStartTimeMs,
+  setSimTimeMs,
   initElevators,
 } from '../../simulation/state';
 import { resetGenerator } from '../../simulation/requestGenerator';
 import { resetLoopAccumulator } from '../../simulation/loop';
+import { resetRetryTimer } from '../../scheduler';
 
 const router = Router();
 
@@ -29,6 +32,7 @@ router.post('/reset', (_req, res) => {
   resetState();
   resetGenerator();
   resetLoopAccumulator();
+  resetRetryTimer();
   res.json({ ok: true });
 });
 
@@ -39,6 +43,10 @@ router.post('/config', (req, res) => {
   if (typeof body.speed === 'number') setSpeedMultiplier(body.speed);
   const freq = body.requestFrequencyMs ?? body.frequency;
   if (typeof freq === 'number' && freq > 0) setRequestFrequencyMs(freq);
+  if (typeof body.startTimeMs === 'number' && body.startTimeMs >= 0) {
+    setStartTimeMs(body.startTimeMs);
+    setSimTimeMs(body.startTimeMs);
+  }
   initElevators();
   res.json({ ok: true });
 });

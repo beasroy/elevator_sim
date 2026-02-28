@@ -36,3 +36,13 @@ export function utilizationPerElevator(elevators: Elevator[]): Record<string, nu
   }
   return out;
 }
+
+export function rejectedCount(requests: Request[]): number {
+  return requests.filter((r) => r.rejectedAt != null).length;
+}
+
+export function pendingCount(requests: Request[]): number {
+  return requests.filter(
+    (r) => r.assignedElevatorId == null && r.rejectedAt == null
+  ).length;
+}
