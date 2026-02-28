@@ -3,7 +3,7 @@
 
 import type { Request } from '../models/Request';
 import { defaults, isRushWindow } from '../config/defaults';
-import { getNumFloors, addRequest } from './state';
+import { getNumFloors, getRequestFrequencyMs, addRequest } from './state';
 import { handleNewRequest } from '../scheduler';
 
 let lastEmitSimTimeMs = -defaults.requestFrequencyMs;
@@ -55,8 +55,9 @@ function createRequest(now: number): Request {
 
 export function maybeEmitRequest(now: number): void {
   if (getNumFloors() < 2) return;
+  const frequencyMs = getRequestFrequencyMs();
   const elapsed = now - lastEmitSimTimeMs;
-  if (elapsed < defaults.requestFrequencyMs) return;
+  if (elapsed < frequencyMs) return;
 
   lastEmitSimTimeMs = now;
   const request = createRequest(now);
@@ -68,5 +69,5 @@ export function maybeEmitRequest(now: number): void {
 // Reset generator state (e.g. on simulation reset) so next emit uses frequency from now.
 
 export function resetGenerator(): void {
-  lastEmitSimTimeMs = -defaults.requestFrequencyMs;
+  lastEmitSimTimeMs = -getRequestFrequencyMs();
 }

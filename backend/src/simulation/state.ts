@@ -11,6 +11,7 @@ let numFloors: number = defaults.numFloors;
 let numElevators: number = defaults.numElevators;
 let simTimeMs: number = 0;
 let speedMultiplier: number = 1;
+let requestFrequencyMs: number = defaults.requestFrequencyMs;
 let isRunning: boolean = false;
 
 function createElevator(id: string): Elevator {
@@ -69,6 +70,14 @@ export function setSpeedMultiplier(speed: number): void {
   speedMultiplier = speed;
 }
 
+export function getRequestFrequencyMs(): number {
+  return requestFrequencyMs;
+}
+
+export function setRequestFrequencyMs(ms: number): void {
+  requestFrequencyMs = ms;
+}
+
 export function getIsRunning(): boolean {
   return isRunning;
 }
@@ -81,6 +90,7 @@ export function setIsRunning(running: boolean): void {
 export function resetState(): void {
   numFloors = defaults.numFloors;
   numElevators = defaults.numElevators;
+  requestFrequencyMs = defaults.requestFrequencyMs;
   requests = [];
   simTimeMs = 0;
   isRunning = false;
